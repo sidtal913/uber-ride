@@ -48,10 +48,12 @@ roles:
 routePolicy:
   public:
     - GET /api/health
-  customerOrDriver:
-    - POST /api/v1/rides/quote
+  customerOnly:
     - GET /api/v1/rides
     - POST /api/v1/rides
+  customerOrDriver:
+    - POST /api/v1/rides/quote
+  customerOrAdmin:
     - GET /api/v1/rides/{rideId}
   adminOnly:
     - GET /api/v1/admin/rides
