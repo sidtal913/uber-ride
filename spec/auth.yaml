@@ -1,0 +1,80 @@
+# Uber Ride — application auth contract (Knox / UR-1)
+# Cloud Cognito user pools (customers + drivers) are provisioned in infra/security — not here.
+
+version: "1.0"
+scheme: bearer
+tokenFormat: JWT
+
+securitySchemes:
+  bearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: |
+      Access token issued by Cognito (production) or dev HS256 signed token when JWT_SECRET is set locally.
+
+claims:
+  sub:
+    type: string
+    description: Stable user identifier (Cognito sub).
+  email:
+    type: string
+    format: email
+    optional: true
+  roles:
+    type: array
+    items:
+      type: string
+      enum: [customer, driver, admin]
+    description: Application roles mapped from Cognito groups.
+
+roles:
+  customer:
+    description: Book rides, view own ride history, request fare quotes.
+    scopes:
+      - rides:quote
+      - rides:read:own
+      - rides:create
+  driver:
+    description: Accept and update assigned rides (future driver app).
+    scopes:
+      - rides:read:assigned
+      - rides:update:status
+  admin:
+    description: Operational admin surface — all rides read-only listing in v1.
+    scopes:
+      - admin:rides:read
+
+routePolicy:
+  public:
+    - GET /api/health
+  customerOnly:
+    - GET /api/v1/rides
+    - POST /api/v1/rides
+    - GET /orders
+    - POST /orders
+  customerOrDriver:
+    - POST /api/v1/rides/quote
+  customerOrAdmin:
+    - GET /api/v1/rides/{rideId}
+  adminOnly:
+    - GET /api/v1/admin/rides
+
+denyWithoutToken:
+  description: Protected routes return 401 Unauthorized when Authorization header is missing or invalid.
+  statusCode: 401
+  body:
+    error: unauthorized
+    message: Authentication required
+
+denyInsufficientRole:
+  statusCode: 403
+  body:
+    error: forbidden
+    message: Insufficient role for this resource
+
+productionNotes:
+  cognito:
+    userPoolCustomers: infra/security module (Mira)
+    userPoolDrivers: infra/security module (Mira)
+    jwtValidation: RS256 via JWKS URL — replace HS256 dev verifier in lib/auth/jwt.ts when wired
