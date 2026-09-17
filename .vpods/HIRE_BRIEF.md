@@ -3,7 +3,7 @@ Project: Uber Ride
 Hire agent: knox
 Jira: UR-1
 Task id: task_74cac7ba
-Title: Backend: Define the Uber Ride API contract
+Title: Define the Uber Ride API contract
 Shape: api-route
 ## Description
 Ship the backend API and data layer only — not the React / UI pages.
