@@ -65,6 +65,60 @@ paths:
         "422":
           $ref: "#/components/responses/ValidationError"
 
+  /orders:
+    get:
+      tags: [Rides]
+      operationId: listMyOrders
+      summary: List ride orders for the authenticated customer (e-commerce alias)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated ride orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Rides]
+      operationId: createOrder
+      summary: Book a ride order (alias of POST /api/v1/rides)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRideRequest"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
   /api/v1/rides:
     get:
       tags: [Rides]

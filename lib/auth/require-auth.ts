@@ -49,7 +49,11 @@ export async function requireAuth(
   return { ok: true, user };
 }
 
-export function jsonAuthError(result: Extract<AuthResult, { ok: false }>): Response {
+/** Accepts full AuthResult so callers need not rely on control-flow narrowing (structural tsc gate). */
+export function jsonAuthError(result: AuthResult): Response {
+  if (result.ok) {
+    throw new Error("jsonAuthError called with successful auth");
+  }
   return Response.json(
     { error: result.error, message: result.message },
     { status: result.status },

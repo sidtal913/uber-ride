@@ -51,6 +51,8 @@ routePolicy:
   customerOnly:
     - GET /api/v1/rides
     - POST /api/v1/rides
+    - GET /orders
+    - POST /orders
   customerOrDriver:
     - POST /api/v1/rides/quote
   customerOrAdmin:
