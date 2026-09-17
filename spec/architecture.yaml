@@ -1,0 +1,27 @@
+version: "1.0"
+product: Uber Ride
+stack:
+  frontend: Next.js (Rae — out of scope UR-1)
+  api: Next.js Route Handlers under app/api
+  auth: JWT in application code (Cognito tokens at runtime)
+  persistence: PostgreSQL via lib/db
+  futureGraphql: AWS AppSync (infra/api — Mira)
+
+boundaries:
+  knox:
+    owns:
+      - spec/api.openapi.yaml
+      - spec/auth.yaml
+      - spec/data-model.yaml
+      - app/api/**
+      - lib/auth/**
+      - lib/db/**
+  mira:
+    owns:
+      - infra/network
+      - infra/api
+      - infra/data
+      - infra/security
+  rae:
+    owns:
+      - app/page.tsx and customer UI flows

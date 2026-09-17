@@ -1,0 +1,392 @@
+openapi: 3.1.0
+info:
+  title: Uber Ride API
+  version: 1.0.0
+  description: |
+    Montreal ride booking API (Uber X–style). Customers request fare quotes and book rides;
+    drivers match offers in later flows. Admin listing is read-only in v1.
+
+    Auth: JWT bearer (`Authorization: Bearer <token>`). See spec/auth.yaml.
+
+servers:
+  - url: http://localhost:3000
+    description: Local Next.js API
+  - url: "{baseUrl}"
+    description: Deployed host
+    variables:
+      baseUrl:
+        default: https://example.com
+
+tags:
+  - name: System
+  - name: Rides
+  - name: Admin
+
+paths:
+  /api/health:
+    get:
+      tags: [System]
+      operationId: getHealth
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/v1/rides/quote:
+    post:
+      tags: [Rides]
+      operationId: createRideQuote
+      summary: Estimate fare for a pickup and dropoff in Montreal
+      description: Requires authenticated customer or driver role.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RideQuoteRequest"
+      responses:
+        "200":
+          description: Fare estimate (not persisted until ride is created)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideQuoteResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /api/v1/rides:
+    get:
+      tags: [Rides]
+      operationId: listMyRides
+      summary: List rides for the authenticated customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          schema:
+            type: string
+            description: Opaque pagination cursor (ride id)
+      responses:
+        "200":
+          description: Paginated ride list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Rides]
+      operationId: createRide
+      summary: Book a ride from a quote or fresh locations
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRideRequest"
+      responses:
+        "201":
+          description: Ride created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /api/v1/rides/{rideId}:
+    get:
+      tags: [Rides]
+      operationId: getRide
+      summary: Get a ride by id (owner customer or admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/RideId"
+      responses:
+        "200":
+          description: Ride details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/admin/rides:
+    get:
+      tags: [Admin]
+      operationId: adminListRides
+      summary: List all rides (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/RideStatus"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: All rides
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    RideId:
+      name: rideId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: unauthorized
+            message: Authentication required
+    Forbidden:
+      description: Valid token but insufficient role
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: forbidden
+            message: Insufficient role for this resource
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationErrorResponse"
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        service:
+          type: string
+          example: uber-ride-api
+        timestamp:
+          type: string
+          format: date-time
+        database:
+          type: string
+          enum: [connected, in-memory, unavailable]
+
+    GeoPoint:
+      type: object
+      required: [address, lat, lng]
+      properties:
+        address:
+          type: string
+          minLength: 3
+          example: 1000 Rue de la Gauchetière O, Montréal, QC
+        lat:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          example: 45.5017
+        lng:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          example: -73.5673
+
+    RideStatus:
+      type: string
+      enum: [quoted, requested, matched, in_progress, completed, cancelled]
+
+    RideQuoteRequest:
+      type: object
+      required: [pickup, dropoff]
+      properties:
+        pickup:
+          $ref: "#/components/schemas/GeoPoint"
+        dropoff:
+          $ref: "#/components/schemas/GeoPoint"
+
+    RideQuoteResponse:
+      type: object
+      required:
+        - estimatedDistanceKm
+        - estimatedDurationMinutes
+        - estimatedFareCents
+        - currency
+      properties:
+        estimatedDistanceKm:
+          type: number
+          format: double
+        estimatedDurationMinutes:
+          type: integer
+        estimatedFareCents:
+          type: integer
+          description: CAD cents
+        currency:
+          type: string
+          default: CAD
+
+    CreateRideRequest:
+      type: object
+      required: [pickup, dropoff]
+      properties:
+        pickup:
+          $ref: "#/components/schemas/GeoPoint"
+        dropoff:
+          $ref: "#/components/schemas/GeoPoint"
+        acceptEstimatedFare:
+          type: boolean
+          default: true
+          description: Customer confirms the computed fare estimate
+
+    Ride:
+      type: object
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - customerId
+        - status
+        - pickup
+        - dropoff
+        - estimatedDistanceKm
+        - estimatedDurationMinutes
+        - estimatedFareCents
+        - currency
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        customerId:
+          type: string
+        driverId:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/RideStatus"
+        pickup:
+          $ref: "#/components/schemas/GeoPoint"
+        dropoff:
+          $ref: "#/components/schemas/GeoPoint"
+        estimatedDistanceKm:
+          type: number
+        estimatedDurationMinutes:
+          type: integer
+        estimatedFareCents:
+          type: integer
+        currency:
+          type: string
+
+    RideListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ride"
+        nextCursor:
+          type: string
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    ValidationErrorResponse:
+      type: object
+      required: [error, message, details]
+      properties:
+        error:
+          type: string
+          example: validation_error
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              message:
+                type: string

@@ -1,0 +1,29 @@
+version: "1.0"
+environments:
+  local:
+    apiBaseUrl: http://localhost:3000
+    database:
+      provider: postgresql
+      connectionEnv: DATABASE_URL
+      fallback: in-memory (when DATABASE_URL unset)
+    auth:
+      mode: dev-jwt-hs256
+      env:
+        - JWT_SECRET
+        - JWT_ISSUER
+        - JWT_AUDIENCE
+  preview:
+    apiBaseUrl: "${AMPLIFY_HOST}/api"
+    database:
+      provider: postgresql
+      connectionEnv: DATABASE_URL
+    auth:
+      mode: cognito-jwt-rs256
+      note: Wire JWKS from Cognito user pool when infra lands
+  production:
+    apiBaseUrl: "${PRODUCTION_API_HOST}"
+    database:
+      provider: postgresql
+      connectionEnv: DATABASE_URL
+    auth:
+      mode: cognito-jwt-rs256

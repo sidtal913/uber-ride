@@ -1,0 +1,82 @@
+# Uber Ride persistence model — PostgreSQL
+version: "1.0"
+database: postgresql
+regionContext: Montreal, CA (CAD fares)
+
+entities:
+  Ride:
+    table: rides
+    description: A customer ride request from quote through driver match (Uber X–style).
+    fields:
+      id:
+        type: uuid
+        primaryKey: true
+        default: gen_random_uuid()
+      createdAt:
+        type: timestamptz
+        required: true
+      updatedAt:
+        type: timestamptz
+        required: true
+      customerId:
+        type: string
+        required: true
+        index: true
+        description: JWT sub of the booking customer.
+      driverId:
+        type: string
+        nullable: true
+        index: true
+        description: Assigned driver sub when matched.
+      status:
+        type: enum
+        values: [quoted, requested, matched, in_progress, completed, cancelled]
+        required: true
+      pickupAddress:
+        type: string
+        required: true
+      pickupLat:
+        type: decimal
+        precision: 10
+        scale: 7
+        required: true
+      pickupLng:
+        type: decimal
+        precision: 10
+        scale: 7
+        required: true
+      dropoffAddress:
+        type: string
+        required: true
+      dropoffLat:
+        type: decimal
+        precision: 10
+        scale: 7
+        required: true
+      dropoffLng:
+        type: decimal
+        precision: 10
+        scale: 7
+        required: true
+      estimatedDistanceKm:
+        type: decimal
+        precision: 8
+        scale: 2
+        required: true
+      estimatedDurationMinutes:
+        type: integer
+        required: true
+      estimatedFareCents:
+        type: integer
+        required: true
+        description: Fare in CAD cents (Montreal).
+      currency:
+        type: string
+        default: CAD
+        maxLength: 3
+
+indexes:
+  - name: idx_rides_customer_created
+    columns: [customerId, createdAt DESC]
+  - name: idx_rides_status
+    columns: [status]
