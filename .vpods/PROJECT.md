@@ -25,8 +25,25 @@ You have not shipped on this project yet.
 ## Shared project memory
 
 Shared project memory (not owned by any hire). Use only what is relevant. Secrets are stripped.
-[in_progress/in_progress] Backend: Define the Uber Ride API contract files:spec/api.openapi.yaml,spec/auth.yaml
-Backend: Define the Uber Ride API contract
+[decision/draft] Uber Ride: 4 pages (proposed) files:frontend/ (React or similar SPA framework — TBD pending brand confirm),backend/ (ASP.NET, Node.js, or similar — TBD pending contract definition),/,/book,/rides/:id,/login
+{
+  "version": 1,
+  "status": "proposed",
+  "productName": "Uber Ride",
+  "pages": [
+    {
+      "id": "landing",
+      "route": "/",
+      "name": "Landing / Hero",
+      "purpose": "Primary entry point; photographic hero with headline, CTA, and navigation; converts user to ride-booking flow.",
+      "craft": "frontend",
+      "provenance": {
+        "kind": "grounded",
+        "sources": [
+          "UR-2",
+       
+[in_progress/in_progress] Define the Uber Ride API contract files:spec/api.openapi.yaml,spec/auth.yaml
+Define the Uber Ride API contract
 Ship the backend API and data layer only — not the React / UI pages.
 Include connection/config stubs and a minimal health or hello endpoint when greenfield.
 Do not rewrite frontend pages.
@@ -36,23 +53,17 @@ Delivery order: 1.
 
 Requires: none
 
-Own spec/api.openapi.yaml and spec/auth.yaml. Define request/response payloads and persistence. Auth: aut
-[task/open] Define the Uber Ride API contract files:spec/api.openapi.yaml,spec/auth.yaml
+Own spec/api.openapi.yaml and spec/auth.yaml. Define request/response payloads and persistence. Auth: authenticate
+[blocker/blocked] Define the Uber Ride API contract files:spec/api.openapi.yaml,spec/auth.yaml
+Define the Uber Ride API contract
+Ship the backend API and data layer only — not the React / UI pages.
+Include connection/config stubs and a minimal health or hello endpoint when greenfield.
+Do not rewrite frontend pages.
+Parent brief:
 Define the Uber Ride API contract
 Delivery order: 1.
 
 Requires: none
 
-Own spec/api.openapi.yaml and spec/auth.yaml. Define request/response payloads and persistence. Auth: authenticated users; requires JWT bearer token; scopes: customer role. Admin surface: admin only. Schema: fields id, createdAt, updatedAt plus domain attributes from the brief; reuse the existing table/entity when one already covers this domain. Co
-[task/open] Define the Uber Ride API contract files:spec/api.openapi.yaml,spec/auth.yaml
-Define the Uber Ride API contract
-Delivery order: 1.
-
-Requires: none
-
-Own spec/api.openapi.yaml and spec/auth.yaml. Define request/response payloads and persistence. Auth: authenticated users; requires JWT bearer token; scopes: customer role. Admin surface: admin only. Schema: fields id, createdAt, updatedAt plus domain attributes from the brief; reuse the existing table/entity when one already covers this domain. Co
-[task/open] Pipeline for Uber Ride plan, approve, apply, deploy
-Pipeline for Uber Ride plan, approve, apply, deploy
-Delivery order: 2.
-
-Requires: UR-1…
+Own spec/api.openapi.yaml and spec/auth.yaml. Define request/response payloads and persistence. Auth: authenticate
+[task/open] Define…
